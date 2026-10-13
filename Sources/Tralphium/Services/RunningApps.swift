@@ -44,6 +44,25 @@ final class RunningApps {
         running.first { $0.id.caseInsensitiveCompare(bundleID) == .orderedSame }?.isHidden ?? false
     }
 
+    func activate(bundleID: String) {
+        var apps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+        if apps.isEmpty {
+            apps = NSWorkspace.shared.runningApplications.filter {
+                $0.bundleIdentifier?.caseInsensitiveCompare(bundleID) == .orderedSame
+            }
+        }
+        for app in apps {
+            app.activate()
+            if let bundleURL = app.bundleURL {
+                let config = NSWorkspace.OpenConfiguration()
+                config.activates = true
+                NSWorkspace.shared.openApplication(at: bundleURL, configuration: config, completionHandler: nil)
+            }
+            let pid = app.processIdentifier
+            runAppleScript("tell application \"System Events\" to set frontmost of (first process whose unix id is \(pid)) to true")
+        }
+    }
+
     func unhide(bundleID: String, inBackground: Bool = true) {
         var apps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
         if apps.isEmpty {
@@ -57,9 +76,9 @@ final class RunningApps {
             AXUIElementSetAttributeValue(axApp, kAXHiddenAttribute as CFString, kCFBooleanFalse)
             _ = app.unhide()
             runAppleScript("tell application \"System Events\" to set visible of (first process whose unix id is \(pid)) to true")
-            if !inBackground {
-                app.activate()
-            }
+        }
+        if !inBackground {
+            activate(bundleID: bundleID)
         }
         reload()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
@@ -124,7 +143,8 @@ final class RunningApps {
             )
         }
         if list != running { running = list }
-        let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
-        if front != frontmostID { frontmostID = front }
+        if let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier, front != own {
+            if front != frontmostID { frontmostID = front }
+        }
     }
 }

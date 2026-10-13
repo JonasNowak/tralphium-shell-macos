@@ -41,7 +41,7 @@ struct TaskbarView: View {
                     DragGesture(minimumDistance: 0, coordinateSpace: .global)
                         .onChanged { val in
                             let distance = hypot(val.translation.width, val.translation.height)
-                            if draggingID == nil && distance >= 4 {
+                            if draggingID == nil && distance >= 8 {
                                 draggingID = item.id
                             }
                             if draggingID == item.id {
@@ -49,7 +49,8 @@ struct TaskbarView: View {
                             }
                         }
                         .onEnded { val in
-                            if draggingID == item.id {
+                            let distance = hypot(val.translation.width, val.translation.height)
+                            if distance >= 14 && draggingID == item.id {
                                 let offsetSlots = Int(round(val.translation.width / pitch))
                                 let maxTarget = item.isPinned ? max(0, totalPinned - 1) : totalPinned
                                 let targetIndex = max(0, min(maxTarget, index + offsetSlots))
@@ -59,6 +60,8 @@ struct TaskbarView: View {
                                 draggingID = nil
                                 dragOffset = 0
                             } else {
+                                draggingID = nil
+                                dragOffset = 0
                                 handleClick(item: item, isRunning: isRunning, isHidden: isHidden, isFrontmost: isFrontmost)
                             }
                         }
@@ -110,13 +113,7 @@ struct TaskbarView: View {
                 // Option-click on running app OR clicking the frontmost app toggles hide
                 RunningApps.shared.hide(bundleID: item.id)
             } else {
-                var runningApp = NSRunningApplication.runningApplications(withBundleIdentifier: item.id).first
-                if runningApp == nil {
-                    runningApp = NSWorkspace.shared.runningApplications.first {
-                        $0.bundleIdentifier?.caseInsensitiveCompare(item.id) == .orderedSame
-                    }
-                }
-                runningApp?.activate()
+                RunningApps.shared.activate(bundleID: item.id)
             }
         } else {
             Launch.app(bundleID: item.id)
