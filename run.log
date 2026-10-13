@@ -1,8 +1,0 @@
-[33m  WARN[0m: [31mQuickshell was built against Qt 6.11.2 but the system has updated to Qt 6.12.0 without rebuilding the package. This is likely to cause crashes, so the quickshell package must be rebuilt.
-
-[32m  INFO[0m: Launching config: "/home/jonasnowak/repos/tralphium/test_settings.qml"
-[32m  INFO[0m: Shell ID: "aa9b93ac755baa707a6ecdc12add791b" Path ID "aa9b93ac755baa707a6ecdc12add791b"
-[32m  INFO[0m: Saving logs to "/run/user/1000/quickshell/by-id/e12o5wkmt/log.qslog"
-[34m DEBUG[97m qml[0m: Current Tab: 0
-[32m  INFO[0m: Configuration Loaded
-[33m  WARN[97m qt.qpa.wayland.textinput[0m: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7fb70d5e2100 but 0x0 is focused
