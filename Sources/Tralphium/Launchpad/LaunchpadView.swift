@@ -67,21 +67,44 @@ struct LaunchpadView: View {
                         .font(.system(size: 14))
                         .foregroundColor(Color(p.textSecondary))
 
-                    Button {
-                        handleWebSearch()
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "globe")
-                            Text("Search web for \"\(query)\"")
+                    HStack(spacing: 12) {
+                        Button {
+                            handleWebSearch()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "globe")
+                                Text("Search web for \"\(query)\"")
+                            }
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(Color(p.accent))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(Color(p.hover))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(Color(p.accent))
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(Color(p.hover))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .buttonStyle(.plain)
+
+                        Button {
+                            let target = query
+                            query = ""
+                            onClose()
+                            Task {
+                                await WebAppService.create(url: target)
+                            }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "plus.app.fill")
+                                Text("Install as Web App")
+                            }
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(Color(p.accent))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(Color(p.hover))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                     Spacer()
                 }
                 .frame(maxHeight: .infinity)

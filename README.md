@@ -21,8 +21,20 @@ This is the native macOS edition of Tralphium, designed with a focus on simplici
 - **Fast Application Search:** Fullscreen overlay with instant fuzzy search across installed macOS applications.
 - **Keyboard Navigation:** Type to filter, press Enter to immediately launch the top match.
 - **Web Search Fallback:** Search the web directly from the launcher if no local app matches.
+- **Install Web App:** Type a URL or app name with no local matches and click "Install as Web App" to instantly create a standalone Helium app.
 - **Global Hotkey:** Press `⌥Space` (Option + Space) anywhere in macOS to toggle Launchpad.
 - **URL Scheme Integration:** Trigger actions from Raycast, Shortcuts, or terminal via `tralphium://toggleLaunchpad`, `tralphium://openLaunchpad`, or `tralphium://closeLaunchpad`.
+
+### Chrome OS-Style Web Applications (Helium)
+Tralphium allows creating first-class, standalone Chrome OS-style web apps powered by Helium (`net.imput.helium`):
+- **Standalone Windows:** Runs via Helium `--app="<url>"` mode with no browser tabs or navigation chrome.
+- **Independent macOS App Bundles:** Packaged directly into `~/Applications/<Name>.app` with high-resolution app icon generation (Apple `.icns` standard sizes), executable launcher, and ad-hoc code signature.
+- **Auto-Discovery:** Immediately indexed in Tralphium's Launchpad and pinnable to the shelf taskbar.
+- **Ways to Add:**
+  - **Shelf:** Right-click shelf and choose "Add Web App (Helium)...".
+  - **Launchpad:** Enter a URL or site name and click "Install as Web App".
+  - **CLI:** Run `./scripts/add-webapp.sh <url> [name] [--open]`.
+  - **URL Scheme:** `open -g "tralphium://addWebApp?url=https://youtube.com&name=YouTube"`.
 
 ## Design & Architecture
 
@@ -79,3 +91,5 @@ Tralphium registers the `tralphium://` URL scheme for system integration:
 - `open -g tralphium://openLaunchpad` - Open the Launchpad
 - `open -g tralphium://closeLaunchpad` - Close the Launchpad
 - `open -g tralphium://reloadConfig` - Force reload configuration from disk
+- `open -g "tralphium://addWebApp?url=https://..."` - Create and register a Helium web app
+- `open -g tralphium://refreshApps` - Refresh application index in Launchpad and Shelf

@@ -75,6 +75,9 @@ struct ShelfView: View {
                 }
             }
             Divider()
+            Button("Add Web App (Helium)...") {
+                WebAppPrompt.show()
+            }
             Button("Open config.json") {
                 Launch.url(ShellFiles.config)
             }

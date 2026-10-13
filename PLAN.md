@@ -78,6 +78,7 @@ Mapping of the old modules: `components/*` → `Sources/Tralphium/<Feature>/`,
 | Themes (8 QML palettes) | `ThemePalette` struct in Core with the same names: nord, catppuccin-{mocha,macchiato,frappe,latte}, kanagawa, one-dark, one-light | Glass tint + accent from palette |
 | Material Symbols font | **SF Symbols.** Remove the 4 MB-class font asset | |
 | `qs ipc call shell …` | URL scheme `tralphium://toggleLaunchpad`, `toggleControlPanel`, `powerMenu`, `screenshot`, `setTheme?name=`, `reload` | Bind in Shortcuts/Raycast/skhd. `open -g tralphium://…` |
+| Chrome OS Web Apps (Helium) | Create standalone web apps powered by Helium (`net.imput.helium`) in `--app="<url>"` mode. Packaged into `~/Applications/<Name>.app` with auto-fetched high-res icon, Info.plist, executable launcher, and ad-hoc signature. Integrated into Launchpad search fallback ("Install as Web App"), Shelf context menu ("Add Web App (Helium)..."), CLI (`scripts/add-webapp.sh`), and URL scheme (`tralphium://addWebApp?url=...`). | Standalone window without browser chrome, user cookies shared via Helium SingletonSocket. |
 | Autostart service | `SMAppService.mainApp` login item | |
 | Config `~/.config/tralphium/config.json` | `~/Library/Application Support/Tralphium/config.json`, same keys where meaningful. Hot reload with `DispatchSource` file watcher. Missing/invalid keys fall back to defaults (lenient decoding) | `apps.terminal` etc. default to Terminal.app, Finder, Activity Monitor, TextEdit |
 

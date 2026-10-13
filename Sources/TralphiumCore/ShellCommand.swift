@@ -16,6 +16,8 @@ public enum ShellCommand: Equatable, Sendable {
     case unhideInBackground(String)
     case unhideAll
     case hide(String)
+    case addWebApp(url: String, name: String?)
+    case refreshApps
 
     public static let scheme = "tralphium"
 
@@ -33,6 +35,12 @@ public enum ShellCommand: Equatable, Sendable {
         case "toggletheme": self = .toggleTheme
         case "reloadconfig": self = .reloadConfig
         case "unhideall": self = .unhideAll
+        case "refreshapps": self = .refreshApps
+        case "addwebapp", "createwebapp":
+            let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+            guard let targetURL = items?.first(where: { $0.name == "url" })?.value, !targetURL.isEmpty else { return nil }
+            let name = items?.first(where: { $0.name == "name" })?.value
+            self = .addWebApp(url: targetURL, name: name)
         case "settheme":
             let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
             let fromQuery = items?.first { $0.name == "name" }?.value

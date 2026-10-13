@@ -85,6 +85,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             RunningApps.shared.unhideAll(inBackground: true)
         case .hide(let id):
             RunningApps.shared.hide(bundleID: id)
+        case .refreshApps:
+            AppCatalog.shared.refresh()
+        case .addWebApp(let targetURL, let name):
+            Task {
+                await WebAppService.create(url: targetURL, name: name, launchAfterCreation: true)
+            }
         }
     }
 

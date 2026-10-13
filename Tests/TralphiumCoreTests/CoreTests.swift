@@ -194,7 +194,10 @@ import Testing
         #expect(parse("tralphium://hide") == nil)
         #expect(parse("tralphium://setTheme?name=nord") == .setTheme("nord"))
         #expect(parse("tralphium://setTheme/one-dark") == .setTheme("one-dark"))
-        #expect(parse("tralphium://setTheme") == nil)
+        #expect(parse("tralphium://refreshApps") == .refreshApps)
+        #expect(parse("tralphium://addWebApp?url=https://youtube.com&name=YouTube") == .addWebApp(url: "https://youtube.com", name: "YouTube"))
+        #expect(parse("tralphium://createWebApp?url=https://github.com") == .addWebApp(url: "https://github.com", name: nil))
+        #expect(parse("tralphium://addWebApp") == nil)
         #expect(parse("tralphium://nope") == nil)
         #expect(parse("https://toggleLaunchpad") == nil)
     }
