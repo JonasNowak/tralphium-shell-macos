@@ -67,6 +67,11 @@ final class LaunchpadController {
 
     func show() {
         guard let screen = NSScreen.main else { return }
+
+        // Close other panels
+        ControlPanelController.shared.hide()
+        PowerMenuController.shared.hide()
+
         let padX: CGFloat = 12
         let shelfHeight: CGFloat = ShelfController.height
         let gap: CGFloat = 10

@@ -8,11 +8,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var launchpadHotKey: HotKey?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Enforce single instance: a second copy would stack on top.
-        if let id = Bundle.main.bundleIdentifier,
-           NSRunningApplication.runningApplications(withBundleIdentifier: id).count > 1 {
-            NSApp.terminate(nil)
-            return
+        // Enforce single instance: only terminate if a prior instance exists.
+        if let id = Bundle.main.bundleIdentifier {
+            let instances = NSRunningApplication.runningApplications(withBundleIdentifier: id)
+            if instances.count > 1, let first = instances.first, first.processIdentifier != getpid() {
+                NSApp.terminate(nil)
+                return
+            }
         }
 
         // Initialize Shelf
@@ -57,6 +59,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             LaunchpadController.shared.show()
         case .closeLaunchpad:
             LaunchpadController.shared.hide()
+        case .toggleControlPanel:
+            ControlPanelController.shared.toggle()
+        case .openPowerMenu:
+            PowerMenuController.shared.toggle()
+        case .takeScreenshot:
+            ScreenshotService.take()
         case .reloadConfig:
             ConfigStore.shared.reload()
         case .toggleTheme:
@@ -71,8 +79,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             RunningApps.shared.unhideAll(inBackground: true)
         case .hide(let id):
             RunningApps.shared.hide(bundleID: id)
-        default:
-            break
         }
     }
 

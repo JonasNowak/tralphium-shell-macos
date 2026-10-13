@@ -18,6 +18,17 @@ struct ShelfView: View {
                 topTrailingRadius: p.panelRadius
             )
             .fill(Color(p.panelBackground))
+            .background(
+                VisualEffectBackground(material: .hudWindow, blendingMode: .behindWindow)
+                    .clipShape(
+                        UnevenRoundedRectangle(
+                            topLeadingRadius: p.panelRadius,
+                            bottomLeadingRadius: 0,
+                            bottomTrailingRadius: 0,
+                            topTrailingRadius: p.panelRadius
+                        )
+                    )
+            )
             .overlay {
                 UnevenRoundedRectangle(
                     topLeadingRadius: p.panelRadius,

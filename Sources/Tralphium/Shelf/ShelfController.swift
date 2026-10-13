@@ -9,12 +9,13 @@ final class ShelfController {
 
     private let panel = ShellPanel(
         level: .statusBar,
-        behavior: [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle],
+        behavior: [.canJoinAllSpaces, .stationary, .ignoresCycle],
         takesKeyboard: false,
         mayLeaveScreen: true
     )
 
     private var isHidden = false
+    private var isAppFullscreen = false
     var onLauncherClick: (() -> Void)?
 
     init(onLauncherClick: (() -> Void)? = nil) {
@@ -40,31 +41,61 @@ final class ShelfController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.reposition() }
+            MainActor.assumeIsolated {
+                self?.checkFullscreenState()
+                self?.reposition()
+            }
         }
 
         // Handle config changes (e.g. autoHide toggled)
         ConfigStore.shared.observe { [weak self] in
             self?.reposition()
         }
+
+        // Handle space and active app changes to detect fullscreen apps
+        let wsCenter = NSWorkspace.shared.notificationCenter
+        wsCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkFullscreenState() }
+        }
+
+        wsCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkFullscreenState() }
+        }
+
+        wsCenter.addObserver(
+            forName: NSWorkspace.didDeactivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkFullscreenState() }
+        }
     }
 
     func show() {
+        guard !isAppFullscreen else { return }
         panel.orderFrontRegardless()
     }
 
     private func handleMouseEnter() {
-        guard ConfigStore.shared.config.shelfAutoHide, isHidden else { return }
+        guard !isAppFullscreen, ConfigStore.shared.config.shelfAutoHide, isHidden else { return }
         reveal()
     }
 
     private func handleMouseExit() {
-        guard ConfigStore.shared.config.shelfAutoHide, !isHidden else { return }
+        guard !isAppFullscreen, ConfigStore.shared.config.shelfAutoHide, !isHidden else { return }
         hideToSliver()
     }
 
     private func reveal() {
-        guard let screen = NSScreen.main else { return }
+        guard !isAppFullscreen, let screen = NSScreen.main else { return }
         isHidden = false
         let f = screen.frame
         let targetFrame = NSRect(x: f.minX, y: f.minY, width: f.width, height: Self.height)
@@ -72,7 +103,7 @@ final class ShelfController {
     }
 
     private func hideToSliver() {
-        guard let screen = NSScreen.main else { return }
+        guard !isAppFullscreen, let screen = NSScreen.main else { return }
         isHidden = true
         let f = screen.frame
         let targetFrame = NSRect(x: f.minX, y: f.minY - Self.height + 4, width: f.width, height: Self.height)
@@ -87,8 +118,42 @@ final class ShelfController {
         }
     }
 
+    private func checkFullscreenState() {
+        let isFS = isFrontmostAppFullscreen()
+        guard isFS != isAppFullscreen else { return }
+        isAppFullscreen = isFS
+        reposition()
+    }
+
+    private func isFrontmostAppFullscreen() -> Bool {
+        guard let frontApp = NSWorkspace.shared.frontmostApplication,
+              frontApp.bundleIdentifier != Bundle.main.bundleIdentifier else { return false }
+        let pid = frontApp.processIdentifier
+        let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
+        guard let windowList = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]],
+              let screen = NSScreen.main else {
+            return false
+        }
+        for win in windowList {
+            guard let winPID = win[kCGWindowOwnerPID as String] as? pid_t, winPID == pid else { continue }
+            guard let layer = win[kCGWindowLayer as String] as? Int, layer == 0 else { continue }
+            if let bounds = win[kCGWindowBounds as String] as? [String: CGFloat],
+               let w = bounds["Width"], let h = bounds["Height"],
+               w >= screen.frame.width - 2 && h >= screen.frame.height - 2 {
+                return true
+            }
+        }
+        return false
+    }
+
     private func reposition() {
         guard let screen = NSScreen.main else { return }
+        if isAppFullscreen {
+            panel.orderOut(nil)
+            return
+        } else if !panel.isVisible {
+            panel.orderFrontRegardless()
+        }
         let f = screen.frame
         let autoHide = ConfigStore.shared.config.shelfAutoHide
         if !autoHide { isHidden = false }

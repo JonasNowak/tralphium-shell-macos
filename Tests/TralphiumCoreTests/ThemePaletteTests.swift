@@ -34,7 +34,7 @@ import Testing
 
     @Test func derivedColoursUseAlphas() {
         let p = ThemePalette.nord
-        #expect(p.panelBackground.alpha == 0.95)
+        #expect(p.panelBackground.alpha == 0.80)
         #expect(p.hover.alpha == 0.8)
         #expect(p.textSecondary.alpha == 0.7)
     }

@@ -147,6 +147,10 @@ struct LaunchpadView: View {
         .padding(18)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(p.panelBackground))
+        .background(
+            VisualEffectBackground(material: .hudWindow, blendingMode: .behindWindow)
+                .clipShape(RoundedRectangle(cornerRadius: p.panelRadius))
+        )
         .clipShape(RoundedRectangle(cornerRadius: p.panelRadius))
         .overlay {
             RoundedRectangle(cornerRadius: p.panelRadius)

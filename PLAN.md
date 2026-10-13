@@ -59,7 +59,7 @@ Mapping of the old modules: `components/*` → `Sources/Tralphium/<Feature>/`,
 | Taskbar (`ToplevelManager`) | Pinned + running apps from `NSWorkspace` (launch/terminate/activate/hide/unhide notifications). Drag-and-drop moveable icons to reorder or pin. Click activates, Option-click or context menu hides / unhides in background. Right-click: Pin/Unpin, Hide, Unhide in Background, Quit | Per-app, not per-window. |
 | Pins, hidden apps | `PinnedList`, `HiddenApps` in Core, JSON persisted. Launchpad hidden apps drawer and hide/unhide context actions | Keyed by bundle ID |
 | Launchpad + `list_apps.py` | Scan `/Applications`, `/System/Applications`, `~/Applications` (+ `/System/Cryptexes`), icons via `NSWorkspace.icon(forFile:)`. Fuzzy search, web-search fallback | Global hotkey via Carbon `RegisterEventHotKey` (no permission needed). Default ⌥Space |
-| Control panel | **Excluded for MVP 0.2** (deferred per owner decision) | Revisit after MVP 0.2 |
+| Control panel | Implemented (Quick settings pop-up docked above status area: network, bluetooth, DND, night shift, theme cycle, screen capture, volume with audio output sink picker, brightness, date, battery, session buttons, blurred glass background) | Replaces QML ControlPanel |
 | Volume / sinks (PipeWire) | CoreAudio (`AudioObjectAddPropertyListener`), default output device, output list | Event driven |
 | Brightness (sysfs) | `DisplayServices` via `dlopen` for built-in display. Hidden if unavailable | |
 | Battery (sysfs) | IOKit `IOPSNotificationCreateRunLoopSource` | Replaces 10 s polling |
@@ -102,8 +102,8 @@ Each phase ends with: build green, tests green, commit, push.
 3. **Core logic + tests.** *(done)* Config (lenient JSON, defaults, watcher), 8 palettes, `PinnedList`, `HiddenApps`, fuzzy matcher, app catalog, battery/volume description strings.
 4. **Shelf.** *(done)* Launcher button, taskbar (pinned + running, indicators, context menu, pin/unpin/quit), status area (Wi-Fi, volume, battery, clock), bottom bar docked, auto-hide with hover sliver.
 5. **Launchpad.** *(done)* Fullscreen overlay panel, auto-focused search, app grid, web-search fallback, global hotkey (⌥Space), Esc / backdrop dismiss, Enter key launch.
-6. ~~Control panel~~ Excluded for MVP 0.2 release (owner decision).
-7. **Power menu, toasts, URL scheme, login item, wallpaper.** (URL scheme & login item integration for Shelf/Launchpad; other panels deferred).
+6. **Control panel & Power menu.** *(done)* Control panel (quick toggles, volume slider with audio sink device picker, brightness slider, session actions, open config.json) and centered modal Power menu (Shut down, Restart, Sleep, Sign out, Lock). Transparency effects enabled with NSVisualEffectView across all panels. Docker (shelf) auto-hides when any application enters fullscreen.
+7. **Power menu, toasts, URL scheme, login item, wallpaper.** (URL scheme & login item integration for Shelf/Launchpad/ControlPanel/PowerMenu).
 8. ~~Settings window~~ removed from scope.
 9. **Final cleanup.** *(done)* Delete Linux leftover files, rewrite README for macOS, tag `0.20`.
 

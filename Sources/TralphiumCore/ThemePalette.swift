@@ -56,6 +56,7 @@ public struct ThemePalette: Equatable, Sendable {
     public var hover: RGBA { buttonHover.withAlpha(buttonHoverOpacity) }
     public var panelBorder: RGBA { hover }
     public var textSecondary: RGBA { textForeground.withAlpha(0.7) }
+    public var activeTint: RGBA { accent }
     public var danger: RGBA { RGBA(hex: "#ff5252")! }
 }
 
@@ -79,7 +80,7 @@ extension ThemePalette {
         ThemePalette(
             name: name,
             shelfBackground: RGBA(hex: background)!,
-            shelfOpacity: 0.95,
+            shelfOpacity: 0.80,
             buttonHover: RGBA(hex: hover)!,
             buttonHoverOpacity: 0.8,
             iconColor: RGBA(hex: text)!,

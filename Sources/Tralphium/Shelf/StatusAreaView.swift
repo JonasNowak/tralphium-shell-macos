@@ -48,60 +48,73 @@ struct StatusAreaView: View {
             .onHover { isDateHovered = $0 }
             .help(clock.dateString)
 
-            // Right Pill: Time, Wi-Fi, Audio, Battery
-            HStack(spacing: 8) {
-                // Clock Time
-                Text(clock.timeString.isEmpty ? "--:--" : clock.timeString)
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundColor(Color(p.textForeground))
+            // Right Pill: Time, Wi-Fi, Audio, Battery -> Toggles Control Panel
+            let isControlPanelOpen = ControlPanelState.shared.isVisible
 
-                // Wi-Fi
-                StatusAreaIconButton(
-                    symbol: wifi.symbolName,
-                    tooltip: wifi.subtitle,
-                    action: { wifi.togglePower() }
-                )
+            Button {
+                ControlPanelController.shared.toggle()
+            } label: {
+                HStack(spacing: 8) {
+                    // Clock Time
+                    Text(clock.timeString.isEmpty ? "--:--" : clock.timeString)
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundColor(Color(p.textForeground))
 
-                // Audio
-                StatusAreaIconButton(
-                    symbol: audioSymbol,
-                    tooltip: audioTooltip,
-                    action: { audio.toggleMute() }
-                )
+                    // Wi-Fi
+                    Image(systemName: wifi.symbolName)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(Color(p.iconColor))
 
-                // Battery (hidden on desktop systems without internal battery)
-                if let status = battery.status {
-                    HStack(spacing: 3) {
-                        Image(systemName: status.symbolName)
-                            .font(.system(size: 11))
-                        Text("\(status.capacity)%")
-                            .font(.system(size: 10, weight: .semibold))
+                    // Audio
+                    Image(systemName: audioSymbol)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(Color(p.iconColor))
+
+                    // Battery (hidden on desktop systems without internal battery)
+                    if let status = battery.status {
+                        HStack(spacing: 3) {
+                            Image(systemName: status.symbolName)
+                                .font(.system(size: 11))
+                            Text("\(status.capacity)%")
+                                .font(.system(size: 10, weight: .semibold))
+                        }
+                        .foregroundColor(Color(p.iconColor))
                     }
-                    .foregroundColor(Color(p.iconColor))
-                    .help(status.description)
                 }
-            }
-            .padding(.horizontal, 10)
-            .frame(height: 28)
-            .background(isMainHovered ? Color(p.hover).opacity(0.75) : Color(p.hover).opacity(0.35))
-            .clipShape(
-                UnevenRoundedRectangle(
-                    topLeadingRadius: 4,
-                    bottomLeadingRadius: 4,
-                    bottomTrailingRadius: 14,
-                    topTrailingRadius: 14
+                .padding(.horizontal, 10)
+                .frame(height: 28)
+                .background(
+                    isControlPanelOpen
+                        ? Color(p.hover)
+                        : (isMainHovered ? Color(p.hover).opacity(0.75) : Color(p.hover).opacity(0.35))
                 )
-            )
-            .overlay {
-                UnevenRoundedRectangle(
-                    topLeadingRadius: 4,
-                    bottomLeadingRadius: 4,
-                    bottomTrailingRadius: 14,
-                    topTrailingRadius: 14
+                .clipShape(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 4,
+                        bottomLeadingRadius: 4,
+                        bottomTrailingRadius: 14,
+                        topTrailingRadius: 14
+                    )
                 )
-                .strokeBorder(Color(p.panelBorder).opacity(0.5), lineWidth: 1)
+                .overlay {
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 4,
+                        bottomLeadingRadius: 4,
+                        bottomTrailingRadius: 14,
+                        topTrailingRadius: 14
+                    )
+                    .strokeBorder(
+                        isControlPanelOpen
+                            ? Color(p.accent).opacity(0.7)
+                            : Color(p.panelBorder).opacity(0.5),
+                        lineWidth: isControlPanelOpen ? 1.5 : 1
+                    )
+                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .onHover { isMainHovered = $0 }
+            .help("Control Panel")
         }
     }
 
@@ -115,36 +128,5 @@ struct StatusAreaView: View {
         } else {
             return "speaker.fill"
         }
-    }
-
-    private var audioTooltip: String {
-        if audio.isMuted {
-            return "Audio Muted"
-        } else {
-            return "Volume: \(Int((audio.volume * 100).rounded()))%"
-        }
-    }
-}
-
-private struct StatusAreaIconButton: View {
-    let symbol: String
-    let tooltip: String
-    let action: () -> Void
-
-    @State private var isHovered = false
-
-    var body: some View {
-        let p = ThemeStore.shared.palette
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(isHovered ? Color(p.accent) : Color(p.iconColor))
-                .frame(width: 18, height: 18)
-                .background(isHovered ? Color(p.hover).opacity(0.8) : Color.clear)
-                .clipShape(Circle())
-        }
-        .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
-        .help(tooltip)
     }
 }
