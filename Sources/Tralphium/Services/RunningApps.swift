@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 import Observation
 
 /// Running regular apps and the frontmost one, driven by NSWorkspace
@@ -44,52 +45,69 @@ final class RunningApps {
     }
 
     func unhide(bundleID: String, inBackground: Bool = true) {
-        let apps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-        for app in apps {
-            if !app.unhide() {
-                let pid = app.processIdentifier
-                runAppleScript("tell application \"System Events\" to set visible of (first process whose unix id is \(pid)) to true")
+        var apps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+        if apps.isEmpty {
+            apps = NSWorkspace.shared.runningApplications.filter {
+                $0.bundleIdentifier?.caseInsensitiveCompare(bundleID) == .orderedSame
             }
+        }
+        for app in apps {
+            let pid = app.processIdentifier
+            let axApp = AXUIElementCreateApplication(pid)
+            AXUIElementSetAttributeValue(axApp, kAXHiddenAttribute as CFString, kCFBooleanFalse)
+            _ = app.unhide()
+            runAppleScript("tell application \"System Events\" to set visible of (first process whose unix id is \(pid)) to true")
             if !inBackground {
                 app.activate()
             }
         }
         reload()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            self?.reload()
+        }
     }
 
     func hide(bundleID: String) {
-        let apps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-        for app in apps {
-            if !app.hide() {
-                let pid = app.processIdentifier
-                runAppleScript("tell application \"System Events\" to set visible of (first process whose unix id is \(pid)) to false")
+        var apps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+        if apps.isEmpty {
+            apps = NSWorkspace.shared.runningApplications.filter {
+                $0.bundleIdentifier?.caseInsensitiveCompare(bundleID) == .orderedSame
             }
         }
+        for app in apps {
+            let pid = app.processIdentifier
+            let axApp = AXUIElementCreateApplication(pid)
+            AXUIElementSetAttributeValue(axApp, kAXHiddenAttribute as CFString, kCFBooleanTrue)
+            _ = app.hide()
+            runAppleScript("tell application \"System Events\" to set visible of (first process whose unix id is \(pid)) to false")
+        }
         reload()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            self?.reload()
+        }
     }
 
     func unhideAll(inBackground: Bool = true) {
         for item in running where item.isHidden {
-            let apps = NSRunningApplication.runningApplications(withBundleIdentifier: item.id)
-            for app in apps {
-                if !app.unhide() {
-                    let pid = app.processIdentifier
-                    runAppleScript("tell application \"System Events\" to set visible of (first process whose unix id is \(pid)) to true")
-                }
-                if !inBackground {
-                    app.activate()
-                }
-            }
+            unhide(bundleID: item.id, inBackground: inBackground)
         }
         runAppleScript("tell application \"System Events\" to set visible of every process whose visible is false to true")
         reload()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            self?.reload()
+        }
     }
 
     @discardableResult
     private func runAppleScript(_ source: String) -> Bool {
         var error: NSDictionary?
-        NSAppleScript(source: source)?.executeAndReturnError(&error)
-        return error == nil
+        let script = NSAppleScript(source: source)
+        script?.executeAndReturnError(&error)
+        if let error {
+            NSLog("[RunningApps] AppleScript error: %@", error)
+            return false
+        }
+        return true
     }
 
     private func reload() {

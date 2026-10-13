@@ -35,15 +35,13 @@ struct TaskbarView: View {
                     isHidden: isHidden,
                     isFrontmost: isFrontmost,
                     isDragging: isDragging,
-                    isAnyDragging: draggingID != nil,
-                    onClick: {
-                        handleClick(item: item, isRunning: isRunning, isHidden: isHidden)
-                    }
+                    isAnyDragging: draggingID != nil
                 )
-                .simultaneousGesture(
-                    DragGesture(minimumDistance: 4, coordinateSpace: .global)
+                .gesture(
+                    DragGesture(minimumDistance: 0, coordinateSpace: .global)
                         .onChanged { val in
-                            if draggingID == nil {
+                            let distance = hypot(val.translation.width, val.translation.height)
+                            if draggingID == nil && distance >= 4 {
                                 draggingID = item.id
                             }
                             if draggingID == item.id {
@@ -51,17 +49,17 @@ struct TaskbarView: View {
                             }
                         }
                         .onEnded { val in
-                            if let curID = draggingID, curID == item.id {
+                            if draggingID == item.id {
                                 let offsetSlots = Int(round(val.translation.width / pitch))
                                 let maxTarget = item.isPinned ? max(0, totalPinned - 1) : totalPinned
                                 let targetIndex = max(0, min(maxTarget, index + offsetSlots))
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                     pins.insert(item.id, at: targetIndex)
                                 }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
-                                    draggingID = nil
-                                    dragOffset = 0
-                                }
+                                draggingID = nil
+                                dragOffset = 0
+                            } else {
+                                handleClick(item: item, isRunning: isRunning, isHidden: isHidden, isFrontmost: isFrontmost)
                             }
                         }
                 )
@@ -102,19 +100,23 @@ struct TaskbarView: View {
         return 0
     }
 
-    private func handleClick(item: TaskbarModel.Item, isRunning: Bool, isHidden: Bool) {
+    private func handleClick(item: TaskbarModel.Item, isRunning: Bool, isHidden: Bool, isFrontmost: Bool) {
         let isOption = NSEvent.modifierFlags.contains(.option)
         if isRunning {
             if isHidden {
                 // If hidden, Option-click unhides in background, regular click unhides & activates
                 RunningApps.shared.unhide(bundleID: item.id, inBackground: isOption)
-            } else if isOption {
-                // Option-click on running app hides it
+            } else if isOption || isFrontmost {
+                // Option-click on running app OR clicking the frontmost app toggles hide
                 RunningApps.shared.hide(bundleID: item.id)
             } else {
-                if let runningApp = NSRunningApplication.runningApplications(withBundleIdentifier: item.id).first {
-                    runningApp.activate()
+                var runningApp = NSRunningApplication.runningApplications(withBundleIdentifier: item.id).first
+                if runningApp == nil {
+                    runningApp = NSWorkspace.shared.runningApplications.first {
+                        $0.bundleIdentifier?.caseInsensitiveCompare(item.id) == .orderedSame
+                    }
                 }
+                runningApp?.activate()
             }
         } else {
             Launch.app(bundleID: item.id)
@@ -129,7 +131,6 @@ private struct TaskbarItemView: View {
     let isFrontmost: Bool
     let isDragging: Bool
     let isAnyDragging: Bool
-    let onClick: () -> Void
 
     @State private var isHovered = false
 
@@ -138,34 +139,28 @@ private struct TaskbarItemView: View {
         let appName = AppCatalog.shared.name(forBundleID: item.id)
         let iconImage = AppCatalog.shared.icon(forBundleID: item.id)
 
-        Button {
-            guard !isAnyDragging else { return }
-            onClick()
-        } label: {
-            ZStack(alignment: .bottom) {
-                // Centered App Icon (dimmed if hidden in background)
-                Image(nsImage: iconImage)
-                    .resizable()
-                    .interpolation(.high)
-                    .scaledToFit()
-                    .frame(width: 32, height: 32)
-                    .opacity(isRunning && isHidden ? 0.55 : 1.0)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+        ZStack(alignment: .bottom) {
+            // Centered App Icon (dimmed if hidden in background)
+            Image(nsImage: iconImage)
+                .resizable()
+                .interpolation(.high)
+                .scaledToFit()
+                .frame(width: 32, height: 32)
+                .opacity(isRunning && isHidden ? 0.55 : 1.0)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                // Running indicator pill at bottom
-                if isRunning {
-                    RoundedRectangle(cornerRadius: 1.5)
-                        .fill(indicatorColor(palette: p))
-                        .frame(width: isFrontmost ? 14 : 5, height: 2.5)
-                        .padding(.bottom, 2)
-                }
+            // Running indicator pill at bottom
+            if isRunning {
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(indicatorColor(palette: p))
+                    .frame(width: isFrontmost ? 14 : 5, height: 2.5)
+                    .padding(.bottom, 2)
             }
-            .frame(width: 42, height: 42)
-            .background((isHovered && !isAnyDragging) ? Color(p.hover) : Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .frame(width: 42, height: 42)
+        .background((isHovered && !isAnyDragging) ? Color(p.hover) : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .contentShape(Rectangle())
         .onHover { isHovered = $0 }
         .help(helpText(appName: appName))
         .contextMenu {
@@ -201,7 +196,9 @@ private struct TaskbarItemView: View {
 
     private func helpText(appName: String) -> String {
         if isRunning && isHidden {
-            return "\(appName) (Hidden — ⌥Click or menu to unhide in background)"
+            return "\(appName) (Hidden — Click to unhide, ⌥Click to unhide in background)"
+        } else if isRunning && isFrontmost {
+            return "\(appName) (Active — Click to hide)"
         }
         return appName
     }
