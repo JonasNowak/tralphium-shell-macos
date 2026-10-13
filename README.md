@@ -1,110 +1,81 @@
-# Tralphium (v0.10 alpha)
+# Tralphium for macOS (v0.20)
 
-An absolutely minimal, easily modifiable one-to-one clone of the Tralphium bottom shelf, fully written in [Quickshell](https://outfoxxed.me/quickshell/).
+A lightweight, native desktop shell for macOS built in Swift (AppKit + SwiftUI).
 
-## Dependencies
+This is the native macOS edition of Tralphium, designed with a focus on simplicity (KISS), performance, and seamless macOS integration.
 
-Tralphium relies on a few common Linux utilities to hook into system controls:
+## Features
 
-- **[Quickshell](https://outfoxxed.me/quickshell/)**: The main UI framework and Wayland compositor integration.
-- **WirePlumber (`wpctl`)**: Used for fetching and setting volume levels via the control panel audio slider, and selecting audio sinks.
-- **`macbook-lighter-screen`**: Used for controlling the screen backlight via the control panel brightness slider.
-- **`grim` & `slurp`**: Used for taking full screen and area screenshots.
-- **`nmtui`**: Minimal terminal UI for configuring Wi-Fi and network settings.
-- **`bluetui`**: Minimal terminal UI for configuring Bluetooth devices.
-- **`gammastep`**: Used for applying a blue light filter via the Night Light toggle.
-- **`localsend`**: Used for the local Share feature.
-- **`systemd` (`systemctl`, `loginctl`)**: Used for power management (Shutdown) and session locking.
-- **`psmisc` (`killall`)**: Used for process management of background utilities.
-- **`kitty` & `vim`**: Used to open configuration files and terminal UIs directly from the panel.
-- **`coreutils` (`cat`)**: Used to read battery state and display brightness from the Linux sysfs interface.
-- **`python3`**: Used to run helper scripts (like `etc/list_apps.py` for fetching available applications).
+### Bottom Shelf
+- **Launcher Button:** Tralphium ring-and-dot button to toggle Launchpad.
+- **Taskbar:** Pinned applications and active running applications with crisp icons, running/active indicators, and context menus (Pin/Unpin, Quit).
+- **Status Area:** Event-driven system indicators:
+  - Wi-Fi status and power toggle (CoreWLAN)
+  - Audio status and mute toggle (CoreAudio)
+  - Battery percentage and charge status (IOKit)
+  - Real-time digital clock and date tooltip
+- **Auto-Hide:** Optional auto-hide behavior with a 4px hover sliver that slides in smoothly when hovered.
+- **Context Menu:** Right-click anywhere on the shelf to quickly open Terminal, Files (Finder), Activity Monitor, or the configuration file.
 
-## Structure
+### Launchpad
+- **Fast Application Search:** Fullscreen overlay with instant fuzzy search across installed macOS applications.
+- **Keyboard Navigation:** Type to filter, press Enter to immediately launch the top match.
+- **Web Search Fallback:** Search the web directly from the launcher if no local app matches.
+- **Global Hotkey:** Press `⌥Space` (Option + Space) anywhere in macOS to toggle Launchpad.
+- **URL Scheme Integration:** Trigger actions from Raycast, Shortcuts, or terminal via `tralphium://toggleLaunchpad`, `tralphium://openLaunchpad`, or `tralphium://closeLaunchpad`.
 
-The shell is split into feature modules, reusable widgets and non-visual services. Modules are imported with Quickshell's `qs.*` syntax (e.g. `import qs.widgets`).
+## Design & Architecture
 
-- **`shell.qml`**: Entry point. Only instantiates the top-level surfaces and wires them together.
-- **`components/`**: Feature modules (UI).
-  - `shelf/`: The bottom shelf — `Shelf`, `LauncherButton`, `Taskbar` + `TaskButton` (via Wayland `ToplevelManager`), `StatusArea` + `BatteryIcon`.
-  - `launchpad/`: App launcher with search and web-search fallback. Apps are loaded dynamically using the `Apps` service via `etc/list_apps.py`.
-  - `controlpanel/`: Quick settings — `ControlPanel`, `QuickToggle`, `SliderRow`.
-  - `powermenu/`: Shut down / Restart / Sleep / Sign out / Lock dialog.
-- **`widgets/`**: Generic, theme-aware building blocks — `Overlay` (fullscreen popup window), `Card`, `MenuCard`, `MenuItem`, `IconButton`, `MaterialIcon`, `AppIcon`.
-- **`services/`**: Singletons holding system state and actions — `Audio`, `Battery`, `Brightness`, `Pins` (pinned apps), `Session` (power/lock/sign out).
-- **`themes/`**: Theming engine.
-  - `Theme.qml`: Singleton exposing the active palette, derived colors and the icon font.
-  - `ThemePalette.qml`: Base theme structure defining all required color properties.
-  - `Nord.qml`: The cool, arctic Nord theme.
-  - `Cappuccino.qml`: A warm, coffee-inspired dark theme.
-- **`etc/`**: Helper scripts (`list_apps.py`, `get_sinks.sh`).
+- **macOS Native:** Built with Swift 6, AppKit, and SwiftUI using Swift Package Manager. No third-party dependencies.
+- **Zero Idle CPU (~0%):** Completely event-driven using system notifications and run-loop sources (`NSWorkspace`, `CoreAudio`, `IOKit`, `CoreWLAN`). No polling loops.
+- **Nord Theme:** Clean arctic Nord aesthetics with translucent glass backgrounds.
+- **Modular:** UI-independent logic and models in `TralphiumCore` covered by unit tests; UI in `Tralphium`.
 
+## Building and Running
+
+### Requirements
+- macOS 14+ (macOS 26+ compatible)
+- Apple Command Line Tools or Xcode
+
+### Build & Run
+```bash
+# Build release, assemble ~/Applications/Tralphium.app, and start
+./build.sh
+```
+
+### Run Tests
+```bash
+./test.sh
+```
 
 ## Configuration
 
-All Tralphium settings live in a single unified configuration file:
-`~/.config/tralphium/config.json`
+Settings are stored in:
+`~/Library/Application Support/Tralphium/config.json`
 
-Changes made in the shell (such as toggling the menu bar, switching themes, pinning/hiding apps, or updating notification settings) are **automatically saved to this file**, and changes made directly to `config.json` on disk are **hot-reloaded immediately** in the running shell.
+The file is automatically created with defaults on first launch and **hot-reloads immediately** upon saving changes.
 
-### Example `config.json`:
 ```json
 {
   "theme": "nord",
-  "menuBar": false,
+  "shelfAutoHide": false,
+  "shelfPosition": "bottom",
+  "launchpadHotkey": true,
+  "searchEngine": "DuckDuckGo",
   "apps": {
-    "terminal": "kitty",
-    "fileManager": "kitty -e yazi",
-    "taskManager": "kitty -e btop",
-    "editor": "kitty -e vim",
-    "browser": "helium-browser",
-    "imageEditor": "gimp",
-    "share": "localsend",
-    "networkManager": "kitty -e nmtui",
-    "bluetoothManager": "kitty -e bluetui"
-  },
-  "notifications": {
-    "enabled": true
+    "terminal": "Terminal",
+    "fileManager": "Finder",
+    "taskManager": "Activity Monitor",
+    "editor": "TextEdit",
+    "browser": "Safari"
   }
 }
 ```
 
-### Theming
+## URL Scheme
 
-To switch themes, change `"theme"` in `~/.config/tralphium/config.json` (`"nord"` or `"cappuccino"`), use the Theme toggle in the Control Panel or Shelf context menu, or run:
-```bash
-qs ipc call shell toggleTheme
-# or: qs ipc call shell setTheme cappuccino
-```
-
-To create a new theme:
-1. Create a new `.qml` file in the `themes/` directory (e.g., `Dracula.qml`).
-2. Extend `ThemePalette` and override the colors.
-3. Add it to `themes/Theme.qml` (e.g. `readonly property ThemePalette dracula: Dracula {}`) and to the `current` selection.
-
-## Connecting to Linux Systems (Networking, Battery, etc.)
-
-By default, the UI connects to the Linux Wayland window manager natively to show active windows (tasks) via `ToplevelManager`.
-
-System integrations live in `services/` as singletons, so any component can use them (e.g. `Battery.capacity`, `Audio.setVolume(0.5)`). To hook up something new, add a service that runs commands with Quickshell's `Process`, and keep the UI in `components/` purely declarative.
-
-The network indicator in `components/shelf/StatusArea.qml` is still a placeholder. Example service exposing the current Wi-Fi SSID via `nmcli` (`services/Network.qml`):
-
-```qml
-pragma Singleton
-import QtQuick
-import Quickshell
-import Quickshell.Io
-
-Singleton {
-    property string ssid: ""
-
-    Process {
-        command: ["sh", "-c", "nmcli -t -f active,ssid dev wifi | grep '^yes' | cut -d: -f2"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: parent.ssid = this.text.trim() || "Disconnected"
-        }
-    }
-}
-```
+Tralphium registers the `tralphium://` URL scheme for system integration:
+- `open -g tralphium://toggleLaunchpad` - Toggle the Launchpad overlay
+- `open -g tralphium://openLaunchpad` - Open the Launchpad
+- `open -g tralphium://closeLaunchpad` - Close the Launchpad
+- `open -g tralphium://reloadConfig` - Force reload configuration from disk

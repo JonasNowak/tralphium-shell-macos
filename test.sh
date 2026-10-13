@@ -8,6 +8,15 @@ cd "$(dirname "$0")"
 # stamps Finder attributes on build products and makes codesign fail.
 SCRATCH=${TRALPHIUM_BUILD_DIR:-$HOME/Library/Caches/Tralphium/build}
 
+if [ -z "${SDKROOT:-}" ]; then
+    if [ -d "/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk" ]; then
+        SDKROOT="/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk"
+    else
+        SDKROOT=$(xcrun --show-sdk-path 2>/dev/null || true)
+    fi
+    export SDKROOT
+fi
+
 CLT=/Library/Developer/CommandLineTools
 FW=$CLT/Library/Developer/Frameworks
 LIB=$CLT/Library/Developer/usr/lib

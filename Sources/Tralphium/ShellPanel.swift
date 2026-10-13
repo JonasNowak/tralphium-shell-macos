@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 
 /// Base window of every shell surface: borderless, transparent, never steals
 /// focus from the app you are working in, stays put when another app becomes
@@ -6,12 +7,23 @@ import AppKit
 /// whether it takes keyboard input.
 class ShellPanel: NSPanel {
     private let takesKeyboard: Bool
+    private let mayLeaveScreen: Bool
+    /// Called for Escape.
+    var onCancel: (() -> Void)?
 
-    init(level: NSWindow.Level, behavior: NSWindow.CollectionBehavior, takesKeyboard: Bool = false) {
+    /// `mayLeaveScreen`: macOS pushes windows back onto the screen otherwise,
+    /// but an auto-hidden shelf has to slide mostly off it.
+    init(level: NSWindow.Level, behavior: NSWindow.CollectionBehavior,
+         takesKeyboard: Bool = false, mayLeaveScreen: Bool = false) {
         self.takesKeyboard = takesKeyboard
+        self.mayLeaveScreen = mayLeaveScreen
+        var mask: NSWindow.StyleMask = [.borderless]
+        if !takesKeyboard {
+            mask.insert(.nonactivatingPanel)
+        }
         super.init(
             contentRect: .zero,
-            styleMask: [.borderless, .nonactivatingPanel],
+            styleMask: mask,
             backing: .buffered,
             defer: true
         )
@@ -27,5 +39,19 @@ class ShellPanel: NSPanel {
     }
 
     override var canBecomeKey: Bool { takesKeyboard }
-    override var canBecomeMain: Bool { false }
+    override var canBecomeMain: Bool { takesKeyboard }
+
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
+        mayLeaveScreen ? frameRect : super.constrainFrameRect(frameRect, to: screen)
+    }
+
+    override func cancelOperation(_ sender: Any?) {
+        if let onCancel { onCancel() } else { super.cancelOperation(sender) }
+    }
+}
+
+/// Hosting view for panels that are not key: the first click must reach the
+/// buttons instead of only focusing the window.
+final class ShellHostingView<Content: View>: NSHostingView<Content> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }

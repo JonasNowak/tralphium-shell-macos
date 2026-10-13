@@ -59,7 +59,7 @@ Mapping of the old modules: `components/*` → `Sources/Tralphium/<Feature>/`,
 | Taskbar (`ToplevelManager`) | Pinned + running apps from `NSWorkspace` (launch/terminate notifications). Click activates, right-click menu: Pin, Hide, Quit | Per-app, not per-window. Per-window would need Accessibility. Revisit later |
 | Pins, hidden apps | `PinnedList`, `HiddenApps` in Core, JSON persisted | Keyed by bundle ID |
 | Launchpad + `list_apps.py` | Scan `/Applications`, `/System/Applications`, `~/Applications` (+ `/System/Cryptexes`), icons via `NSWorkspace.icon(forFile:)`. Fuzzy search, web-search fallback | Global hotkey via Carbon `RegisterEventHotKey` (no permission needed). Default ⌥Space |
-| Control panel | SwiftUI popover panel anchored to the status area | Sections below |
+| Control panel | **Excluded for MVP 0.2** (deferred per owner decision) | Revisit after MVP 0.2 |
 | Volume / sinks (PipeWire) | CoreAudio (`AudioObjectAddPropertyListener`), default output device, output list | Event driven |
 | Brightness (sysfs) | `DisplayServices` via `dlopen` for built-in display. Hidden if unavailable | |
 | Battery (sysfs) | IOKit `IOPSNotificationCreateRunLoopSource` | Replaces 10 s polling |
@@ -74,7 +74,7 @@ Mapping of the old modules: `components/*` → `Sources/Tralphium/<Feature>/`,
 | Notifications server + Toasts | **Cannot intercept macOS Notification Center.** Toasts become shell-internal (battery, volume, screenshot saved, errors). Own notifications use `UNUserNotificationCenter` | `NotificationService`/`NotificationCard` shrink to a toast queue |
 | TopBar ("Googlebook" bar) | **Dropped in v1.** macOS has its own menu bar. May return as a thin clock/status bar | |
 | Wallpaper | `NSWorkspace.setDesktopImageURL` on all screens | No extra window, no GPU cost |
-| Settings window (11 pages) | SwiftUI window. Keep pages with real function: Network, Bluetooth, Personalization (theme, wallpaper, shelf), Apps (default apps), Search, Privacy (deep links into System Settings), About. Drop placeholder or Linux-only pages (Accounts, Phone Hub, Accessibility toggles) unless they map to something real | Pages are filled in order of usefulness |
+| Settings window (11 pages) | **Removed** (owner decision). No settings UI and no pages. Configuration is `config.json` with hot reload, plus the control panel toggles (theme, night shift, etc.). The control panel's Settings button becomes "Open config" and opens the file in the default editor | |
 | Themes (8 QML palettes) | `ThemePalette` struct in Core with the same names: nord, catppuccin-{mocha,macchiato,frappe,latte}, kanagawa, one-dark, one-light | Glass tint + accent from palette |
 | Material Symbols font | **SF Symbols.** Remove the 4 MB-class font asset | |
 | `qs ipc call shell …` | URL scheme `tralphium://toggleLaunchpad`, `toggleControlPanel`, `powerMenu`, `screenshot`, `setTheme?name=`, `reload` | Bind in Shortcuts/Raycast/skhd. `open -g tralphium://…` |
@@ -99,13 +99,13 @@ Each phase ends with: build green, tests green, commit, push.
 
 1. **Repo + plan.** Create repo, this plan, `agents.md` reference. *(done)*
 2. **Scaffold.** `Package.swift` (Core + app + tests), `build.sh`, `test.sh`, `Info.plist`, `assemble-app.sh`, `ShellPanel`, accessory app lifecycle, single instance, `.gitignore`, junk deletion. Result: app launches and shows an empty themed shelf. *(done)*
-3. **Core logic + tests.** *(8 palettes + tests done.)* Config (lenient JSON, defaults, watcher), 8 palettes, `PinnedList`, `HiddenApps`, fuzzy matcher, app catalog, battery/volume description strings.
-4. **Shelf.** Launcher button, taskbar (pinned + running, indicators, menu, drag reorder), status area (Wi-Fi, volume, battery, clock), position + auto-hide.
-5. **Launchpad.** Overlay panel, search, grid, web-search fallback, hotkey, keyboard navigation.
-6. **Control panel + services.** Audio, brightness, battery, Wi-Fi, Bluetooth, VPN, Night Shift, screenshot, DND shortcut, share.
-7. **Power menu, toasts, URL scheme, login item, wallpaper.**
-8. **Settings window.** Pages from the table above.
-9. **Final cleanup.** Delete all remaining Linux files, rewrite README, tag `v0.1.0-macos`.
+3. **Core logic + tests.** *(done)* Config (lenient JSON, defaults, watcher), 8 palettes, `PinnedList`, `HiddenApps`, fuzzy matcher, app catalog, battery/volume description strings.
+4. **Shelf.** *(done)* Launcher button, taskbar (pinned + running, indicators, context menu, pin/unpin/quit), status area (Wi-Fi, volume, battery, clock), bottom bar docked, auto-hide with hover sliver.
+5. **Launchpad.** *(done)* Fullscreen overlay panel, auto-focused search, app grid, web-search fallback, global hotkey (⌥Space), Esc / backdrop dismiss, Enter key launch.
+6. ~~Control panel~~ Excluded for MVP 0.2 release (owner decision).
+7. **Power menu, toasts, URL scheme, login item, wallpaper.** (URL scheme & login item integration for Shelf/Launchpad; other panels deferred).
+8. ~~Settings window~~ removed from scope.
+9. **Final cleanup.** *(done)* Delete Linux leftover files, rewrite README for macOS, tag `0.20`.
 
 ## 7. Verification
 

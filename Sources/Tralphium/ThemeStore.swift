@@ -8,11 +8,10 @@ extension Color {
     }
 }
 
-/// The active theme, shared by all views. Replaced by the config-backed store
-/// in phase 3 (PLAN.md).
+/// The active theme, shared by all views. Views read it inside `body`, so the
+/// Observation framework redraws them when the config's theme changes.
 @MainActor
-@Observable
 final class ThemeStore {
     static let shared = ThemeStore()
-    var palette = ThemePalette.named(ThemePalette.defaultName)
+    var palette: ThemePalette { ThemePalette.named(ConfigStore.shared.config.theme) }
 }

@@ -6,7 +6,11 @@ cd "$(dirname "$0")"
 # Pin the SDK when the Command Line Tools ship one that matches the compiler
 # (a newer default SDK can mismatch the Swift compiler). Override with SDKROOT.
 if [ -z "${SDKROOT:-}" ]; then
-    SDKROOT=$(xcrun --show-sdk-path 2>/dev/null || true)
+    if [ -d "/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk" ]; then
+        SDKROOT="/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk"
+    else
+        SDKROOT=$(xcrun --show-sdk-path 2>/dev/null || true)
+    fi
     export SDKROOT
 fi
 
