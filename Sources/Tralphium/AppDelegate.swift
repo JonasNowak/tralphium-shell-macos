@@ -8,12 +8,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var launchpadHotKey: HotKey?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Enforce single instance: only terminate if a prior instance exists.
+        // Enforce single instance: only terminate if a prior instance was launched earlier.
         if let id = Bundle.main.bundleIdentifier {
-            let instances = NSRunningApplication.runningApplications(withBundleIdentifier: id)
-            if instances.count > 1, let first = instances.first, first.processIdentifier != getpid() {
-                NSApp.terminate(nil)
-                return
+            let myPID = getpid()
+            let others = NSRunningApplication.runningApplications(withBundleIdentifier: id)
+                .filter { $0.processIdentifier != myPID }
+            if !others.isEmpty {
+                let myApp = NSRunningApplication(processIdentifier: myPID)
+                let myDate = myApp?.launchDate ?? Date()
+                if others.contains(where: { ($0.launchDate ?? .distantPast) < myDate }) {
+                    NSApp.terminate(nil)
+                    return
+                }
             }
         }
 

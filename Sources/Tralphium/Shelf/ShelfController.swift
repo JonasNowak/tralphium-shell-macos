@@ -126,6 +126,9 @@ final class ShelfController {
     }
 
     private func isFrontmostAppFullscreen() -> Bool {
+        if NSApp.currentSystemPresentationOptions.contains(.fullScreen) {
+            return true
+        }
         guard let frontApp = NSWorkspace.shared.frontmostApplication,
               frontApp.bundleIdentifier != Bundle.main.bundleIdentifier else { return false }
         let pid = frontApp.processIdentifier
