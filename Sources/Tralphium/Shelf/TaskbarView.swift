@@ -41,21 +41,27 @@ private struct TaskbarItemView: View {
         Button {
             handleClick()
         } label: {
-            VStack(spacing: 2) {
+            ZStack(alignment: .bottom) {
+                // Centered App Icon
                 Image(nsImage: iconImage)
                     .resizable()
                     .interpolation(.high)
                     .scaledToFit()
-                    .frame(width: 26, height: 26)
+                    .frame(width: 32, height: 32)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                // Running indicator dot
-                Circle()
-                    .fill(indicatorColor(palette: p))
-                    .frame(width: 4, height: 4)
+                // Running indicator pill at bottom
+                if isRunning {
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(indicatorColor(palette: p))
+                        .frame(width: isFrontmost ? 14 : 5, height: 2.5)
+                        .padding(.bottom, 2)
+                }
             }
-            .frame(width: 36, height: 38)
+            .frame(width: 42, height: 42)
             .background(isHovered ? Color(p.hover) : Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }

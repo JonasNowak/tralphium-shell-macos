@@ -17,113 +17,99 @@ struct LaunchpadView: View {
     var body: some View {
         let p = ThemeStore.shared.palette
 
-        ZStack {
-            // Semi-transparent backdrop blur; clicking outside closes
-            Color.black.opacity(0.4)
-                .ignoresSafeArea()
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    onClose()
-                }
+        VStack(spacing: 14) {
+            // Search Bar
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(Color(p.accent))
 
-            // Main Launchpad Card
-            VStack(spacing: 16) {
-                // Search Bar
-                HStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(Color(p.accent))
-
-                    TextField("Search applications...", text: $query)
-                        .font(.system(size: 16))
-                        .textFieldStyle(.plain)
-                        .foregroundColor(Color(p.textForeground))
-                        .focused($isSearchFocused)
-                        .onSubmit {
-                            handleEnter()
-                        }
-
-                    if !query.isEmpty {
-                        Button {
-                            query = ""
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(Color(p.textSecondary))
-                        }
-                        .buttonStyle(.plain)
+                TextField("Search applications...", text: $query)
+                    .font(.system(size: 15))
+                    .textFieldStyle(.plain)
+                    .foregroundColor(Color(p.textForeground))
+                    .focused($isSearchFocused)
+                    .onSubmit {
+                        handleEnter()
                     }
-                }
-                .padding(.horizontal, 14)
-                .frame(height: 44)
-                .background(Color(p.hover).opacity(0.6))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 10)
-                        .strokeBorder(Color(p.panelBorder), lineWidth: 1)
-                }
 
-                // Application Grid or Web Fallback
-                if filteredApps.isEmpty && !query.isEmpty {
-                    VStack(spacing: 16) {
-                        Spacer()
-                        Text("No matching applications")
-                            .font(.system(size: 14))
+                if !query.isEmpty {
+                    Button {
+                        query = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
                             .foregroundColor(Color(p.textSecondary))
-
-                        Button {
-                            handleWebSearch()
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "globe")
-                                Text("Search web for \"\(query)\"")
-                            }
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(Color(p.accent))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(Color(p.hover))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
-                        .buttonStyle(.plain)
-                        Spacer()
                     }
-                    .frame(maxHeight: .infinity)
-                } else {
-                    ScrollView {
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 5), spacing: 16) {
-                            ForEach(filteredApps) { app in
-                                LaunchpadAppItemView(app: app) {
-                                    Launch.app(at: app.path)
-                                    onClose()
-                                }
-                            }
-                        }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 4)
-                    }
-                    .frame(maxHeight: .infinity)
+                    .buttonStyle(.plain)
                 }
-
-                // Footer Info
-                HStack {
-                    Text("ESC to close • ⌥Space to toggle")
-                    Spacer()
-                    Text("\(catalog.apps.count) applications installed")
-                }
-                .font(.system(size: 11))
-                .foregroundColor(Color(p.textSecondary))
             }
-            .padding(20)
-            .frame(width: 680, height: 500)
-            .background(Color(p.panelBackground))
-            .clipShape(RoundedRectangle(cornerRadius: p.panelRadius))
+            .padding(.horizontal, 14)
+            .frame(height: 42)
+            .background(Color(p.hover).opacity(0.6))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay {
-                RoundedRectangle(cornerRadius: p.panelRadius)
-                    .strokeBorder(Color(p.panelBorder), lineWidth: p.panelBorderWidth)
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(Color(p.panelBorder), lineWidth: 1)
             }
-            // Catch clicks inside the card so they don't dismiss the window
-            .contentShape(RoundedRectangle(cornerRadius: p.panelRadius))
-            .onTapGesture {}
+
+            // Application Grid or Web Fallback
+            if filteredApps.isEmpty && !query.isEmpty {
+                VStack(spacing: 16) {
+                    Spacer()
+                    Text("No matching applications")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(p.textSecondary))
+
+                    Button {
+                        handleWebSearch()
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "globe")
+                            Text("Search web for \"\(query)\"")
+                        }
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color(p.accent))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color(p.hover))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    .buttonStyle(.plain)
+                    Spacer()
+                }
+                .frame(maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 5), spacing: 12) {
+                        ForEach(filteredApps) { app in
+                            LaunchpadAppItemView(app: app) {
+                                Launch.app(at: app.path)
+                                onClose()
+                            }
+                        }
+                    }
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 2)
+                }
+                .frame(maxHeight: .infinity)
+            }
+
+            // Footer Info
+            HStack {
+                Text("ESC to close • ⌥Space to toggle")
+                Spacer()
+                Text("\(catalog.apps.count) applications installed")
+            }
+            .font(.system(size: 11))
+            .foregroundColor(Color(p.textSecondary))
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(p.panelBackground))
+        .clipShape(RoundedRectangle(cornerRadius: p.panelRadius))
+        .overlay {
+            RoundedRectangle(cornerRadius: p.panelRadius)
+                .strokeBorder(Color(p.panelBorder), lineWidth: p.panelBorderWidth)
         }
         .onAppear {
             isSearchFocused = true
@@ -159,21 +145,21 @@ private struct LaunchpadAppItemView: View {
         let icon = AppCatalog.shared.icon(forPath: app.path)
 
         Button(action: onLaunch) {
-            VStack(spacing: 8) {
+            VStack(spacing: 6) {
                 Image(nsImage: icon)
                     .resizable()
                     .interpolation(.high)
                     .scaledToFit()
-                    .frame(width: 48, height: 48)
+                    .frame(width: 44, height: 44)
 
                 Text(app.name)
-                    .font(.system(size: 12))
+                    .font(.system(size: 11))
                     .foregroundColor(Color(p.textForeground))
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
-                    .frame(width: 100)
+                    .frame(width: 92)
             }
-            .frame(width: 110, height: 96)
+            .frame(width: 98, height: 90)
             .background(isHovered ? Color(p.hover) : Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: 10))
         }

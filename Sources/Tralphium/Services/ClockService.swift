@@ -9,6 +9,7 @@ final class ClockService {
 
     private(set) var timeString: String = ""
     private(set) var dateString: String = ""
+    private(set) var shortDateString: String = ""
 
     @ObservationIgnored private var timer: Timer?
 
@@ -31,5 +32,9 @@ final class ClockService {
         let df = DateFormatter()
         df.dateStyle = .full
         dateString = df.string(from: now)
+
+        let sdf = DateFormatter()
+        sdf.dateFormat = "MMM d"
+        shortDateString = sdf.string(from: now)
     }
 }

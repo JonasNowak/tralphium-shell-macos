@@ -28,22 +28,22 @@ struct ShelfView: View {
                 .strokeBorder(Color(p.panelBorder), lineWidth: p.panelBorderWidth)
             }
 
-            // Shelf content
-            HStack(spacing: 12) {
-                // Left: Launcher Button
-                LauncherButtonView(action: onLauncherClick)
+            // Shelf content: Left and Right at the edges, Taskbar strictly centered
+            ZStack {
+                HStack {
+                    // Left: Launcher Button
+                    LauncherButtonView(action: onLauncherClick)
 
-                Spacer()
+                    Spacer()
 
-                // Center: Taskbar
+                    // Right: Status Area
+                    StatusAreaView()
+                }
+                .padding(.horizontal, 12)
+
+                // Center: Taskbar strictly centered on the shelf and screen
                 TaskbarView()
-
-                Spacer()
-
-                // Right: Status Area
-                StatusAreaView()
             }
-            .padding(.horizontal, 14)
         }
         .frame(height: ShelfController.height)
         .ignoresSafeArea()
