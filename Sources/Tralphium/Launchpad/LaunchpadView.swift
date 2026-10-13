@@ -140,7 +140,6 @@ struct LaunchpadView: View {
             HStack {
                 Text("ESC to close • ⌥Space to toggle")
                 Spacer()
-                Text("\(catalog.apps.count) applications installed")
             }
             .font(.system(size: 11))
             .foregroundColor(Color(p.textSecondary))
