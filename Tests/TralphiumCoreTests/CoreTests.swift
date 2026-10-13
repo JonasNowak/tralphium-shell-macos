@@ -12,13 +12,14 @@ import Testing
     @Test func readsKnownKeys() {
         let json = """
         {"theme":"kanagawa","shelfPosition":"left","shelfAutoHide":true,
-         "searchEngine":"Google","apps":{"terminal":"iTerm"}}
+         "searchEngine":"Google","shelfOpacity":0.4,"apps":{"terminal":"iTerm"}}
         """
         let c = TralphiumConfig(json: Data(json.utf8))
         #expect(c.theme == "kanagawa")
         #expect(c.shelfPosition == .left)
         #expect(c.shelfAutoHide)
         #expect(c.searchEngine == "Google")
+        #expect(c.shelfOpacity == 0.4)
         #expect(c.apps.terminal == "iTerm")
         #expect(c.apps.fileManager == "Finder")
     }
@@ -44,6 +45,7 @@ import Testing
         c.shelfPosition = .right
         c.shelfAutoHide = true
         c.dndShortcut = "Focus"
+        c.shelfOpacity = 0.65
         #expect(TralphiumConfig(json: c.encoded(merging: nil)) == c)
     }
 }

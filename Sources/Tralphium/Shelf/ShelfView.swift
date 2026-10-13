@@ -17,7 +17,7 @@ struct ShelfView: View {
                 bottomTrailingRadius: 0,
                 topTrailingRadius: p.panelRadius
             )
-            .fill(Color(p.panelBackground))
+            .fill(Color(p.shelfBackground).opacity(config.shelfOpacity))
             .background(
                 VisualEffectBackground(material: .hudWindow, blendingMode: .behindWindow)
                     .clipShape(

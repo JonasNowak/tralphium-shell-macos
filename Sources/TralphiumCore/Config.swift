@@ -34,6 +34,8 @@ public struct TralphiumConfig: Equatable, Sendable {
     /// Name of a Shortcuts shortcut that toggles Do Not Disturb. macOS has no
     /// public API for it. Empty opens the Focus settings instead.
     public var dndShortcut = ""
+    /// Opacity of the bottom shelf background tint (0.0 to 1.0).
+    public var shelfOpacity: Double = 0.50
     public var apps = AppCommands()
 
     public init() {}
@@ -45,6 +47,10 @@ public struct TralphiumConfig: Equatable, Sendable {
 
         func string(_ key: String, in d: [String: Any]) -> String? { d[key] as? String }
         func bool(_ key: String, in d: [String: Any]) -> Bool? { d[key] as? Bool }
+        func double(_ key: String, in d: [String: Any]) -> Double? {
+            if let num = d[key] as? NSNumber { return num.doubleValue }
+            return nil
+        }
 
         if let v = string("theme", in: dict), !v.isEmpty { theme = v }
         if let v = string("wallpaper", in: dict) { wallpaper = v }
@@ -55,6 +61,7 @@ public struct TralphiumConfig: Equatable, Sendable {
         if let v = bool("launchpadHotkey", in: dict) { launchpadHotkey = v }
         if let v = bool("launchAtLogin", in: dict) { launchAtLogin = v }
         if let v = string("dndShortcut", in: dict) { dndShortcut = v }
+        if let v = double("shelfOpacity", in: dict) { shelfOpacity = max(0.0, min(1.0, v)) }
         if let a = dict["apps"] as? [String: Any] {
             if let v = string("terminal", in: a), !v.isEmpty { apps.terminal = v }
             if let v = string("fileManager", in: a), !v.isEmpty { apps.fileManager = v }
@@ -77,6 +84,7 @@ public struct TralphiumConfig: Equatable, Sendable {
         dict["launchpadHotkey"] = launchpadHotkey
         dict["launchAtLogin"] = launchAtLogin
         dict["dndShortcut"] = dndShortcut
+        dict["shelfOpacity"] = shelfOpacity
         var appsDict = dict["apps"] as? [String: Any] ?? [:]
         appsDict["terminal"] = apps.terminal
         appsDict["fileManager"] = apps.fileManager
