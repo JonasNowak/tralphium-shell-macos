@@ -9,13 +9,14 @@ final class ShelfController {
 
     private let panel = ShellPanel(
         level: .statusBar,
-        behavior: [.canJoinAllSpaces, .stationary, .ignoresCycle],
+        behavior: [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle],
         takesKeyboard: false,
         mayLeaveScreen: true
     )
 
     private var isHidden = false
     private var isAppFullscreen = false
+    private var fullscreenTimer: Timer?
     var onLauncherClick: (() -> Void)?
 
     init(onLauncherClick: (() -> Void)? = nil) {
@@ -42,7 +43,7 @@ final class ShelfController {
             queue: .main
         ) { [weak self] _ in
             MainActor.assumeIsolated {
-                self?.checkFullscreenState()
+                self?.scheduleFullscreenChecks()
                 self?.reposition()
             }
         }
@@ -59,7 +60,7 @@ final class ShelfController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.checkFullscreenState() }
+            MainActor.assumeIsolated { self?.scheduleFullscreenChecks() }
         }
 
         wsCenter.addObserver(
@@ -67,7 +68,7 @@ final class ShelfController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.checkFullscreenState() }
+            MainActor.assumeIsolated { self?.scheduleFullscreenChecks() }
         }
 
         wsCenter.addObserver(
@@ -75,8 +76,17 @@ final class ShelfController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.checkFullscreenState() }
+            MainActor.assumeIsolated { self?.scheduleFullscreenChecks() }
         }
+
+        // Periodic heartbeat check to guarantee shelf reappears when exiting fullscreen
+        let timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.checkFullscreenState()
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        fullscreenTimer = timer
     }
 
     func show() {
@@ -118,9 +128,25 @@ final class ShelfController {
         }
     }
 
+    private func scheduleFullscreenChecks() {
+        checkFullscreenState()
+        for delay in [0.2, 0.4, 0.7, 1.0, 1.5] {
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(delay))
+                self?.checkFullscreenState()
+            }
+        }
+    }
+
     private func checkFullscreenState() {
         let isFS = isFrontmostAppFullscreen()
-        guard isFS != isAppFullscreen else { return }
+        guard isFS != isAppFullscreen else {
+            // Even if state flag hasn't changed, ensure panel is front when not fullscreen
+            if !isAppFullscreen && !panel.isVisible {
+                reposition()
+            }
+            return
+        }
         isAppFullscreen = isFS
         reposition()
     }
@@ -142,7 +168,7 @@ final class ShelfController {
             guard let layer = win[kCGWindowLayer as String] as? Int, layer == 0 else { continue }
             if let bounds = win[kCGWindowBounds as String] as? [String: CGFloat],
                let w = bounds["Width"], let h = bounds["Height"],
-               w >= screen.frame.width - 2 && h >= screen.frame.height - 2 {
+               w >= screen.frame.width - 4 && h >= screen.frame.height - 4 {
                 return true
             }
         }
@@ -154,14 +180,15 @@ final class ShelfController {
         if isAppFullscreen {
             panel.orderOut(nil)
             return
-        } else if !panel.isVisible {
-            panel.orderFrontRegardless()
         }
         let f = screen.frame
         let autoHide = ConfigStore.shared.config.shelfAutoHide
         if !autoHide { isHidden = false }
         let y = (autoHide && isHidden) ? (f.minY - Self.height + 4) : f.minY
         panel.setFrame(NSRect(x: f.minX, y: y, width: f.width, height: Self.height), display: true)
+        if !panel.isVisible {
+            panel.orderFrontRegardless()
+        }
     }
 }
 

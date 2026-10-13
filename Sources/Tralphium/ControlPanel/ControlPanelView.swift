@@ -1,3 +1,4 @@
+import Collaboration
 import SwiftUI
 import TralphiumCore
 
@@ -14,6 +15,7 @@ struct ControlPanelView: View {
     @State private var volumeValue: Double = 0
     @State private var brightnessValue: Double = 0
     @State private var isAudioOutputsExpanded = false
+    @State private var userAvatar: NSImage? = nil
 
     @State private var isSignOutHovered = false
     @State private var isPowerHovered = false
@@ -29,10 +31,21 @@ struct ControlPanelView: View {
             // MARK: - Header: User profile, Sign out, and session actions
             HStack(spacing: 8) {
                 // User avatar & display name
-                HStack(spacing: 6) {
-                    Image(systemName: "person.crop.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(Color(p.iconColor))
+                HStack(spacing: 8) {
+                    if let userAvatar {
+                        Image(nsImage: userAvatar)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 24, height: 24)
+                            .clipShape(Circle())
+                            .overlay {
+                                Circle().strokeBorder(Color(p.panelBorder).opacity(0.6), lineWidth: 1)
+                            }
+                    } else {
+                        Image(systemName: "person.crop.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(Color(p.iconColor))
+                    }
 
                     Text(userName)
                         .font(.system(size: 13, weight: .bold))
@@ -84,16 +97,16 @@ struct ControlPanelView: View {
                 }
                 .help("Lock Screen")
 
-                // Open config.json button (Settings)
+                // Settings button: opens macOS System Settings
                 HeaderIconButton(
                     symbol: "gearshape.fill",
                     isHovered: isSettingsHovered,
                     onHover: { isSettingsHovered = $0 }
                 ) {
                     ControlPanelController.shared.hide()
-                    Launch.url(ShellFiles.config)
+                    Launch.app(named: "System Settings")
                 }
-                .help("Open config.json")
+                .help("System Settings")
             }
 
             DividerLine()
@@ -313,12 +326,20 @@ struct ControlPanelView: View {
         .onAppear {
             volumeValue = audio.volume
             brightnessValue = brightness.value
+            loadUserAvatar()
         }
         .onChange(of: audio.volume) { _, newVolume in
             volumeValue = newVolume
         }
         .onChange(of: brightness.value) { _, newBrightness in
             brightnessValue = newBrightness
+        }
+    }
+
+    private func loadUserAvatar() {
+        if let identity = CBIdentity(name: NSUserName(), authority: CBIdentityAuthority.default()),
+           let img = identity.image {
+            userAvatar = img
         }
     }
 

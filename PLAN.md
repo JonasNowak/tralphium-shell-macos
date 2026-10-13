@@ -74,7 +74,7 @@ Mapping of the old modules: `components/*` → `Sources/Tralphium/<Feature>/`,
 | Notifications server + Toasts | **Cannot intercept macOS Notification Center.** Toasts become shell-internal (battery, volume, screenshot saved, errors). Own notifications use `UNUserNotificationCenter` | `NotificationService`/`NotificationCard` shrink to a toast queue |
 | TopBar ("Googlebook" bar) | **Dropped in v1.** macOS has its own menu bar. May return as a thin clock/status bar | |
 | Wallpaper | `NSWorkspace.setDesktopImageURL` on all screens | No extra window, no GPU cost |
-| Settings window (11 pages) | **Removed** (owner decision). No settings UI and no pages. Configuration is `config.json` with hot reload, plus the control panel toggles (theme, night shift, etc.). The control panel's Settings button becomes "Open config" and opens the file in the default editor | |
+| Settings window (11 pages) | **Removed** (owner decision). No settings UI and no pages. Configuration is `config.json` with hot reload, plus the control panel toggles (theme, night shift, etc.). The control panel's Settings button opens macOS System Settings directly | |
 | Themes (8 QML palettes) | `ThemePalette` struct in Core with the same names: nord, catppuccin-{mocha,macchiato,frappe,latte}, kanagawa, one-dark, one-light | Glass tint + accent from palette |
 | Material Symbols font | **SF Symbols.** Remove the 4 MB-class font asset | |
 | `qs ipc call shell …` | URL scheme `tralphium://toggleLaunchpad`, `toggleControlPanel`, `powerMenu`, `screenshot`, `setTheme?name=`, `reload` | Bind in Shortcuts/Raycast/skhd. `open -g tralphium://…` |
