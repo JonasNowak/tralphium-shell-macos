@@ -168,8 +168,13 @@ final class ShelfController {
             guard let layer = win[kCGWindowLayer as String] as? Int, layer == 0 else { continue }
             if let bounds = win[kCGWindowBounds as String] as? [String: CGFloat],
                let w = bounds["Width"], let h = bounds["Height"],
-               w >= screen.frame.width - 4 && h >= screen.frame.height - 4 {
-                return true
+               let winY = bounds["Y"] {
+                let touchesBottom = (winY + h) >= screen.frame.height - 10
+                let isFullWidth = w >= screen.frame.width - 10
+                let isFullHeight = h >= screen.visibleFrame.height - 10 || h >= screen.frame.height - 10
+                if isFullWidth && isFullHeight && touchesBottom {
+                    return true
+                }
             }
         }
         return false
