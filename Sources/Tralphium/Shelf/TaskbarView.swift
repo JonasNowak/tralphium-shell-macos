@@ -35,21 +35,15 @@ struct TaskbarView: View {
                     isHidden: isHidden,
                     isFrontmost: isFrontmost,
                     isDragging: isDragging,
-                    isAnyDragging: draggingID != nil
+                    isAnyDragging: draggingID != nil,
+                    onClick: {
+                        handleClick(item: item, isRunning: isRunning, isHidden: isHidden)
+                    }
                 )
-                .offset(x: isDragging ? dragOffset : shift)
-                .zIndex(isDragging ? 20 : 0)
-                .scaleEffect(isDragging ? 1.08 : 1.0)
-                .shadow(
-                    color: isDragging ? Color.black.opacity(0.35) : Color.clear,
-                    radius: 6,
-                    x: 0,
-                    y: 3
-                )
-                .gesture(
-                    DragGesture(minimumDistance: 0)
+                .highPriorityGesture(
+                    DragGesture(minimumDistance: 4, coordinateSpace: .global)
                         .onChanged { val in
-                            if draggingID == nil && abs(val.translation.width) > 4 {
+                            if draggingID == nil {
                                 draggingID = item.id
                             }
                             if draggingID == item.id {
@@ -66,10 +60,17 @@ struct TaskbarView: View {
                                 }
                                 draggingID = nil
                                 dragOffset = 0
-                            } else {
-                                handleClick(item: item, isRunning: isRunning, isHidden: isHidden)
                             }
                         }
+                )
+                .offset(x: isDragging ? dragOffset : shift)
+                .zIndex(isDragging ? 20 : 0)
+                .scaleEffect(isDragging ? 1.08 : 1.0)
+                .shadow(
+                    color: isDragging ? Color.black.opacity(0.35) : Color.clear,
+                    radius: 6,
+                    x: 0,
+                    y: 3
                 )
             }
         }
@@ -126,6 +127,7 @@ private struct TaskbarItemView: View {
     let isFrontmost: Bool
     let isDragging: Bool
     let isAnyDragging: Bool
+    let onClick: () -> Void
 
     @State private var isHovered = false
 
@@ -134,28 +136,34 @@ private struct TaskbarItemView: View {
         let appName = AppCatalog.shared.name(forBundleID: item.id)
         let iconImage = AppCatalog.shared.icon(forBundleID: item.id)
 
-        ZStack(alignment: .bottom) {
-            // Centered App Icon (dimmed if hidden in background)
-            Image(nsImage: iconImage)
-                .resizable()
-                .interpolation(.high)
-                .scaledToFit()
-                .frame(width: 32, height: 32)
-                .opacity(isRunning && isHidden ? 0.55 : 1.0)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        Button {
+            guard !isAnyDragging else { return }
+            onClick()
+        } label: {
+            ZStack(alignment: .bottom) {
+                // Centered App Icon (dimmed if hidden in background)
+                Image(nsImage: iconImage)
+                    .resizable()
+                    .interpolation(.high)
+                    .scaledToFit()
+                    .frame(width: 32, height: 32)
+                    .opacity(isRunning && isHidden ? 0.55 : 1.0)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // Running indicator pill at bottom
-            if isRunning {
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(indicatorColor(palette: p))
-                    .frame(width: isFrontmost ? 14 : 5, height: 2.5)
-                    .padding(.bottom, 2)
+                // Running indicator pill at bottom
+                if isRunning {
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(indicatorColor(palette: p))
+                        .frame(width: isFrontmost ? 14 : 5, height: 2.5)
+                        .padding(.bottom, 2)
+                }
             }
+            .frame(width: 42, height: 42)
+            .background((isHovered && !isAnyDragging) ? Color(p.hover) : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .contentShape(Rectangle())
         }
-        .frame(width: 42, height: 42)
-        .background((isHovered && !isAnyDragging) ? Color(p.hover) : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .contentShape(Rectangle())
+        .buttonStyle(.plain)
         .onHover { isHovered = $0 }
         .help(helpText(appName: appName))
         .contextMenu {
