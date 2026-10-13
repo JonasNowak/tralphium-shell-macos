@@ -40,7 +40,7 @@ struct TaskbarView: View {
                         handleClick(item: item, isRunning: isRunning, isHidden: isHidden)
                     }
                 )
-                .highPriorityGesture(
+                .simultaneousGesture(
                     DragGesture(minimumDistance: 4, coordinateSpace: .global)
                         .onChanged { val in
                             if draggingID == nil {
@@ -58,8 +58,10 @@ struct TaskbarView: View {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                     pins.insert(item.id, at: targetIndex)
                                 }
-                                draggingID = nil
-                                dragOffset = 0
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                                    draggingID = nil
+                                    dragOffset = 0
+                                }
                             }
                         }
                 )
