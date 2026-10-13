@@ -7,11 +7,18 @@ struct LaunchpadView: View {
     @Binding var query: String
     var onClose: () -> Void
 
+    @State private var showHiddenApps = false
     @FocusState private var isSearchFocused: Bool
     private let catalog = AppCatalog.shared
 
     private var filteredApps: [AppEntry] {
         AppSearch.filter(catalog.apps, query: query, hidden: ListStore.hidden.list)
+    }
+
+    private var hiddenApps: [AppEntry] {
+        catalog.apps
+            .filter { ListStore.hidden.contains($0.id) }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     var body: some View {
@@ -80,11 +87,46 @@ struct LaunchpadView: View {
                 .frame(maxHeight: .infinity)
             } else {
                 ScrollView {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 5), spacing: 12) {
-                        ForEach(filteredApps) { app in
-                            LaunchpadAppItemView(app: app) {
-                                Launch.app(at: app.path)
-                                onClose()
+                    VStack(alignment: .leading, spacing: 16) {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 5), spacing: 12) {
+                            ForEach(filteredApps) { app in
+                                LaunchpadAppItemView(app: app) {
+                                    Launch.app(at: app.path)
+                                    onClose()
+                                }
+                            }
+                        }
+
+                        if query.isEmpty && !hiddenApps.isEmpty {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Divider()
+                                    .padding(.vertical, 4)
+
+                                Button {
+                                    withAnimation(.snappy(duration: 0.2)) {
+                                        showHiddenApps.toggle()
+                                    }
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: showHiddenApps ? "chevron.down" : "chevron.right")
+                                            .font(.system(size: 11, weight: .semibold))
+                                        Text("Hidden applications (\(hiddenApps.count))")
+                                            .font(.system(size: 12, weight: .medium))
+                                    }
+                                    .foregroundColor(Color(p.textSecondary))
+                                }
+                                .buttonStyle(.plain)
+
+                                if showHiddenApps {
+                                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 5), spacing: 12) {
+                                        ForEach(hiddenApps) { app in
+                                            LaunchpadAppItemView(app: app) {
+                                                Launch.app(at: app.path)
+                                                onClose()
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -166,5 +208,15 @@ private struct LaunchpadAppItemView: View {
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
         .help(app.name)
+        .contextMenu {
+            let isPinned = ListStore.pins.contains(app.id)
+            Button(isPinned ? "Unpin from Shelf" : "Pin to Shelf") {
+                ListStore.pins.toggle(app.id)
+            }
+            let isHidden = ListStore.hidden.contains(app.id)
+            Button(isHidden ? "Unhide in Launchpad" : "Hide from Launchpad") {
+                ListStore.hidden.toggle(app.id)
+            }
+        }
     }
 }

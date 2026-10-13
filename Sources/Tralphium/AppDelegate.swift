@@ -59,6 +59,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             LaunchpadController.shared.hide()
         case .reloadConfig:
             ConfigStore.shared.reload()
+        case .toggleTheme:
+            ConfigStore.shared.update { $0.theme = ThemePalette.next(after: $0.theme).name }
+        case .setTheme(let name):
+            ConfigStore.shared.update { $0.theme = name }
+        case .unhide(let id):
+            RunningApps.shared.unhide(bundleID: id, inBackground: false)
+        case .unhideInBackground(let id):
+            RunningApps.shared.unhide(bundleID: id, inBackground: true)
+        case .unhideAll:
+            RunningApps.shared.unhideAll(inBackground: true)
+        case .hide(let id):
+            RunningApps.shared.hide(bundleID: id)
         default:
             break
         }

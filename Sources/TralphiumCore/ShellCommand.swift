@@ -12,6 +12,10 @@ public enum ShellCommand: Equatable, Sendable {
     case toggleTheme
     case setTheme(String)
     case reloadConfig
+    case unhide(String)
+    case unhideInBackground(String)
+    case unhideAll
+    case hide(String)
 
     public static let scheme = "tralphium"
 
@@ -28,12 +32,31 @@ public enum ShellCommand: Equatable, Sendable {
         case "takescreenshot": self = .takeScreenshot
         case "toggletheme": self = .toggleTheme
         case "reloadconfig": self = .reloadConfig
+        case "unhideall": self = .unhideAll
         case "settheme":
             let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
             let fromQuery = items?.first { $0.name == "name" }?.value
             let fromPath = url.pathComponents.dropFirst().first
             guard let name = fromQuery ?? fromPath, !name.isEmpty else { return nil }
             self = .setTheme(name)
+        case "unhide":
+            let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+            let fromQuery = items?.first { $0.name == "id" }?.value
+            let fromPath = url.pathComponents.dropFirst().first
+            guard let id = fromQuery ?? fromPath, !id.isEmpty else { return nil }
+            self = .unhide(id)
+        case "unhideinbackground":
+            let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+            let fromQuery = items?.first { $0.name == "id" }?.value
+            let fromPath = url.pathComponents.dropFirst().first
+            guard let id = fromQuery ?? fromPath, !id.isEmpty else { return nil }
+            self = .unhideInBackground(id)
+        case "hide":
+            let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+            let fromQuery = items?.first { $0.name == "id" }?.value
+            let fromPath = url.pathComponents.dropFirst().first
+            guard let id = fromQuery ?? fromPath, !id.isEmpty else { return nil }
+            self = .hide(id)
         default: return nil
         }
     }

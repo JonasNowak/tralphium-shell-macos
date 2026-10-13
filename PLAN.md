@@ -56,8 +56,8 @@ Mapping of the old modules: `components/*` → `Sources/Tralphium/<Feature>/`,
 | --- | --- | --- |
 | Shelf (`PanelWindow`, layer-shell) | `ShellPanel` (borderless `NSPanel`, non-activating, `.statusBar` level, `canJoinAllSpaces`) docked bottom/left/right | macOS has no exclusive zone. The shelf overlays windows. Offer to auto-hide Apple's Dock (`com.apple.dock` defaults), like ApolloShell's `AppleDockHiding` |
 | Shelf auto-hide, position | Same options; hover tracking via `NSTrackingArea`, 4 px sliver | Animated by frame, not per-frame redraw |
-| Taskbar (`ToplevelManager`) | Pinned + running apps from `NSWorkspace` (launch/terminate notifications). Click activates, right-click menu: Pin, Hide, Quit | Per-app, not per-window. Per-window would need Accessibility. Revisit later |
-| Pins, hidden apps | `PinnedList`, `HiddenApps` in Core, JSON persisted | Keyed by bundle ID |
+| Taskbar (`ToplevelManager`) | Pinned + running apps from `NSWorkspace` (launch/terminate/activate/hide/unhide notifications). Drag-and-drop moveable icons to reorder or pin. Click activates, Option-click or context menu hides / unhides in background. Right-click: Pin/Unpin, Hide, Unhide in Background, Quit | Per-app, not per-window. |
+| Pins, hidden apps | `PinnedList`, `HiddenApps` in Core, JSON persisted. Launchpad hidden apps drawer and hide/unhide context actions | Keyed by bundle ID |
 | Launchpad + `list_apps.py` | Scan `/Applications`, `/System/Applications`, `~/Applications` (+ `/System/Cryptexes`), icons via `NSWorkspace.icon(forFile:)`. Fuzzy search, web-search fallback | Global hotkey via Carbon `RegisterEventHotKey` (no permission needed). Default ⌥Space |
 | Control panel | **Excluded for MVP 0.2** (deferred per owner decision) | Revisit after MVP 0.2 |
 | Volume / sinks (PipeWire) | CoreAudio (`AudioObjectAddPropertyListener`), default output device, output list | Event driven |

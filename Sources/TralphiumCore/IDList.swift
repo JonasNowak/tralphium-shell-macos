@@ -35,7 +35,8 @@ public struct IDList: Equatable, Sendable {
     public mutating func insert(_ id: String, at position: Int) {
         guard !id.isEmpty else { return }
         if let existing = index(of: id) {
-            move(from: existing, to: position)
+            let target = min(max(position, 0), ids.count - 1)
+            move(from: existing, to: target)
         } else {
             ids.insert(id, at: min(max(position, 0), ids.count))
         }

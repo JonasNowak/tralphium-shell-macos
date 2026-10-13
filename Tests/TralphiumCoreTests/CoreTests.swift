@@ -71,6 +71,8 @@ import Testing
         #expect(l.ids == ["c", "a", "b", "d"])
         l.insert("e", at: 1)
         #expect(l.ids == ["c", "e", "a", "b", "d"])
+        l.insert("c", at: 99)
+        #expect(l.ids == ["e", "a", "b", "d", "c"])
     }
 
     @Test func moveIgnoresInvalidIndexes() {
@@ -178,6 +180,16 @@ import Testing
         #expect(parse("tralphium://takeScreenshot") == .takeScreenshot)
         #expect(parse("tralphium://toggleTheme") == .toggleTheme)
         #expect(parse("tralphium://reloadConfig") == .reloadConfig)
+        #expect(parse("tralphium://unhideAll") == .unhideAll)
+        #expect(parse("tralphium://unhide?id=com.apple.Safari") == .unhide("com.apple.Safari"))
+        #expect(parse("tralphium://unhide/com.apple.Safari") == .unhide("com.apple.Safari"))
+        #expect(parse("tralphium://unhideInBackground?id=com.apple.Safari") == .unhideInBackground("com.apple.Safari"))
+        #expect(parse("tralphium://unhideinbackground/com.apple.Safari") == .unhideInBackground("com.apple.Safari"))
+        #expect(parse("tralphium://hide?id=com.apple.Safari") == .hide("com.apple.Safari"))
+        #expect(parse("tralphium://hide/com.apple.Safari") == .hide("com.apple.Safari"))
+        #expect(parse("tralphium://unhide") == nil)
+        #expect(parse("tralphium://unhideInBackground") == nil)
+        #expect(parse("tralphium://hide") == nil)
         #expect(parse("tralphium://setTheme?name=nord") == .setTheme("nord"))
         #expect(parse("tralphium://setTheme/one-dark") == .setTheme("one-dark"))
         #expect(parse("tralphium://setTheme") == nil)

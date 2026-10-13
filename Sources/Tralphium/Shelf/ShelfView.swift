@@ -57,6 +57,12 @@ struct ShelfView: View {
             Button("Activity Monitor") {
                 Launch.app(named: config.apps.taskManager)
             }
+            if !RunningApps.shared.hiddenApps.isEmpty {
+                Divider()
+                Button("Unhide All in Background") {
+                    RunningApps.shared.unhideAll(inBackground: true)
+                }
+            }
             Divider()
             Button("Open config.json") {
                 Launch.url(ShellFiles.config)
